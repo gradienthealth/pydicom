@@ -155,7 +155,7 @@ def create_image(ds: "Dataset", data_element: "DataElement") -> "gdcm.Image":
         ds.PhotometricInterpretation
     )
 
-    logger.debug(f"GDCM Photometric Interpretation: {gdcm.PhotometricInterpretation_GetPIString(pi_type)}")
+    # logger.debug(f"GDCM Photometric Interpretation: {gdcm.PhotometricInterpretation_GetPIString(pi_type)}")
 
     image.SetPhotometricInterpretation(
         gdcm.PhotometricInterpretation(pi_type)
