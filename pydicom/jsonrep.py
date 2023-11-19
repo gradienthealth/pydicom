@@ -189,13 +189,16 @@ class JsonDataElementConverter:
 
             if not self.value:
                 return empty_value_for_VR(self.vr)
+                
+            try:
+                val = cast(List[ValueType], self.value)
+                element_value = [self.get_regular_element_value(v) for v in val]
+                if len(element_value) == 1 and self.vr != VR.SQ:
+                    element_value = element_value[0]
 
-            val = cast(List[ValueType], self.value)
-            element_value = [self.get_regular_element_value(v) for v in val]
-            if len(element_value) == 1 and self.vr != VR.SQ:
-                element_value = element_value[0]
-
-            return convert_to_python_number(element_value, self.vr)
+                return convert_to_python_number(element_value, self.vr)
+            except:
+                logger.error("cannot convert string to value")
 
         # The value for "InlineBinary" shall be encoded as a base64 encoded
         # string, as shown in PS3.18, Table F.3.1-1, but the example in
