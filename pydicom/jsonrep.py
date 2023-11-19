@@ -8,8 +8,10 @@ from typing import (
     List
 )
 import warnings
+import logging
 
 from pydicom.valuerep import FLOAT_VR, INT_VR, VR
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover
     from pydicom.dataset import Dataset
@@ -73,7 +75,10 @@ def convert_to_python_number(value: Any, vr: str) -> Any:
             for v in value
         ]
 
-    return number_type(value)
+    try:
+        return number_type(value)
+    except:
+        logging.error("Value type and value are not matched")
 
 
 OtherValueType = Union[None, str, int, float]
