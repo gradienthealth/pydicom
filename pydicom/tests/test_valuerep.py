@@ -603,6 +603,13 @@ class TestDSfloat:
             valuerep.DSfloat('3.141592653589793',
                              validation_mode=config.RAISE)
 
+    def test_handle_missing_leading_zero(self):
+        """Test that no error is raised with maximum length DS string
+        without leading zero."""
+        # Regression test for #1632
+        valuerep.DSfloat(".002006091181818",
+                         validation_mode=config.RAISE)
+
     def test_DSfloat_auto_format(self):
         """Test creating a value using DSfloat copies auto_format"""
         x = DSfloat(math.pi, auto_format=True)
@@ -1051,11 +1058,18 @@ class TestDecimalString:
 class TestPersonName:
     def test_last_first(self):
         """PN: Simple Family-name^Given-name works..."""
-        pn = PersonName("Family^Given")
+        value = "Family^Given"
+        pn = PersonName(val=value)
+        assert value == pn.alphabetic
         assert "Family" == pn.family_name
         assert "Given" == pn.given_name
         assert "" == pn.name_suffix
         assert "" == pn.phonetic
+
+    def test_no_components(self):
+        """PN: Empty Person Name does not raise errors..."""
+        pn = PersonName(val="")
+        assert "" == pn.alphabetic == pn.phonetic == pn.ideographic
 
     def test_copy(self):
         """PN: Copy and deepcopy works..."""
@@ -1084,11 +1098,15 @@ class TestPersonName:
         phonetic characters) works..."""
         # Example name from PS3.5-2008 section I.2 p. 108
         pn = PersonName(
-            "Hong^Gildong="
+            "Hong^Gildong^Andrews="
             "\033$)C\373\363^\033$)C\321\316\324\327="
             "\033$)C\310\253^\033$)C\261\346\265\277"
         )
-        assert ("Hong", "Gildong") == (pn.family_name, pn.given_name)
+        assert ("Hong", "Gildong", "Andrews") == \
+               (pn.family_name, pn.given_name, pn.middle_name)
+        assert "Hong^Gildong^Andrews" == pn.alphabetic
+        assert "\033$)C\373\363^\033$)C\321\316\324\327" == pn.ideographic
+        assert "\033$)C\310\253^\033$)C\261\346\265\277" == pn.phonetic
 
     def test_formatting(self):
         """PN: Formatting works..."""
