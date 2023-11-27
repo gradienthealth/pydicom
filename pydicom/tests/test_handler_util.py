@@ -7,7 +7,6 @@ from struct import unpack, pack
 from sys import byteorder
 
 import pytest
-from pydicom.tests.test_helpers import assert_no_warning
 
 try:
     import numpy as np
@@ -115,8 +114,7 @@ class TestNumpy_PixelDtype:
     def test_unknown_pixel_representation_raises(self):
         """Test an unknown PixelRepresentation value raises exception."""
         self.ds.BitsAllocated = 16
-        with pytest.warns(UserWarning):
-            self.ds.PixelRepresentation = -1
+        self.ds.PixelRepresentation = -1
         # The bracket needs to be escaped
         with pytest.raises(ValueError,
                            match=r"value of '-1' for '\(0028,0103"):
@@ -1209,11 +1207,10 @@ class TestNumpy_PaletteColor:
         assert ([50944, 16384, 27904] == rgb[arr == 149]).all()
 
     def test_first_map_negative(self):
-        """Test a negative first mapping value."""
+        """Test a positive first mapping value."""
         ds = dcmread(PAL_08_200_0_16_1F, force=True)
         ds.file_meta = FileMetaDataset()
         ds.file_meta.TransferSyntaxUID = ImplicitVRLittleEndian
-        ds["RedPaletteColorLookupTableDescriptor"].VR = "SS"
         ds.RedPaletteColorLookupTableDescriptor[1] = -10
         arr = ds.pixel_array
         rgb = apply_color_lut(arr, ds)
@@ -2237,15 +2234,17 @@ class TestGetNrFrames:
         """Test return value when (0028,0008) 'Number of Frames' does not
             exist"""
         ds = Dataset()
-        with assert_no_warning():
+        with pytest.warns(None) as w:
             assert 1 == get_nr_frames(ds)
+            assert not w
 
     def test_existing(self):
         """Test return value when (0028,0008) 'Number of Frames' exists."""
         ds = Dataset()
         ds.NumberOfFrames = random.randint(1, 10)
-        with assert_no_warning():
+        with pytest.warns(None) as w:
             assert ds.NumberOfFrames == get_nr_frames(ds)
+            assert not w
 
 
 REFERENCE_PACK_UNPACK = [

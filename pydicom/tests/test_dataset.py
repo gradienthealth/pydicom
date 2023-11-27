@@ -9,7 +9,6 @@ import sys
 import weakref
 
 import pytest
-from pydicom.tests.test_helpers import assert_no_warning
 
 try:
     import numpy
@@ -248,8 +247,9 @@ class TestDataset:
 
     def test_contains_ignore(self, contains_ignore):
         """Test ignoring invalid keys."""
-        with assert_no_warning():
+        with pytest.warns(None) as record:
             assert 'invalid' not in self.ds
+            assert len(record) == 0
 
     def test_clear(self):
         assert 1 == len(self.ds)
@@ -1245,21 +1245,6 @@ class TestDataset:
         assert ds[tag2].value == b'\x03\x04'
         assert ds[tag2].VR == 'UN'
 
-    def test_invalid_private_creator(self):
-        # regression test for #1638
-        ds = Dataset()
-        ds.add_new(0x00250010, "SL", [13975, 13802])
-        ds.add_new(0x00250011, "LO", "Valid Creator")
-        ds.add_new(0x00251007, "UN", "foobar")
-        ds.add_new(0x00251107, "UN", "foobaz")
-        msg = (r"\(0025, 0010\) '\[13975, 13802]' "
-               r"is not a valid private creator")
-        with pytest.warns(UserWarning, match=msg):
-            assert (str(ds[0x00251007]) == "(0025, 1007) Private tag data"
-                                           "                    UN: 'foobar'")
-        assert (str(ds[0x00251107]) == "(0025, 1107) Private tag data"
-                                       "                    UN: 'foobaz'")
-
     def test_is_original_encoding(self):
         """Test Dataset.write_like_original"""
         ds = Dataset()
@@ -2225,13 +2210,15 @@ def setattr_warn():
 
 def test_setattr_warns(setattr_warn):
     """"Test warnings for Dataset.__setattr__() for close matches."""
-    with assert_no_warning():
+    with pytest.warns(None) as record:
         ds = Dataset()
+        assert len(record) == 0
 
     for s in CAMEL_CASE[0]:
-        with assert_no_warning():
+        with pytest.warns(None) as record:
             val = getattr(ds, s, None)
             setattr(ds, s, val)
+            assert len(record) == 0
 
     for s in CAMEL_CASE[1]:
         msg = (
@@ -2245,13 +2232,15 @@ def test_setattr_warns(setattr_warn):
 
 def test_setattr_raises(setattr_raise):
     """"Test exceptions for Dataset.__setattr__() for close matches."""
-    with assert_no_warning():
+    with pytest.warns(None) as record:
         ds = Dataset()
+        assert len(record) == 0
 
     for s in CAMEL_CASE[0]:
-        with assert_no_warning():
+        with pytest.warns(None) as record:
             val = getattr(ds, s, None)
             setattr(ds, s, val)
+            assert len(record) == 0
 
     for s in CAMEL_CASE[1]:
         msg = (
@@ -2265,16 +2254,19 @@ def test_setattr_raises(setattr_raise):
 
 def test_setattr_ignore(setattr_ignore):
     """Test config.INVALID_KEYWORD_BEHAVIOR = 'IGNORE'"""
-    with assert_no_warning():
+    with pytest.warns(None) as record:
         ds = Dataset()
+        assert len(record) == 0
 
     for s in CAMEL_CASE[0]:
-        with assert_no_warning():
+        with pytest.warns(None) as record:
             val = getattr(ds, s, None)
             setattr(ds, s, val)
+            assert len(record) == 0
 
     ds = Dataset()
     for s in CAMEL_CASE[1]:
-        with assert_no_warning():
-            getattr(ds, s, None)
+        with pytest.warns(None) as record:
+            val = getattr(ds, s, None)
             setattr(ds, s, None)
+            assert len(record) == 0

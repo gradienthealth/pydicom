@@ -353,7 +353,7 @@ class DataElement:
                 else:
                     value = [self.value]
                 for v in value:
-                    comps = {'Alphabetic': v.components[0]}
+                    comps = {'Alphabetic': v.components[0] if v.components else ''}
                     if len(v.components) > 1:
                         comps['Ideographic'] = v.components[1]
                     if len(v.components) > 2:
@@ -650,9 +650,9 @@ class DataElement:
         if self.tag.is_private:
             if self.private_creator:
                 try:
-                    # If we have the name from the private dictionary, use it,
-                    # but put it in square brackets to make clear
-                    # that the tag cannot be accessed by that name
+                    # If have name from private dictionary, use it, but
+                    #   but put in square brackets so is differentiated,
+                    #   and clear that cannot access it by name
                     name = private_dictionary_description(
                         self.tag, self.private_creator
                     )

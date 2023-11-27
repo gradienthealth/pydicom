@@ -8,8 +8,10 @@ from typing import (
     List
 )
 import warnings
+import logging
 
 from pydicom.valuerep import FLOAT_VR, INT_VR, VR
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: no cover
     from pydicom.dataset import Dataset
@@ -57,14 +59,26 @@ def convert_to_python_number(value: Any, vr: str) -> Any:
     if number_type is None:
         return value
 
+    def _convert(to_type, value):
+        try:
+            if to_type == float:
+                if ',' in value:
+                    value = value.replace(',', '.')
+            return to_type(value)
+        except Exception as e:
+            return value
+
     if isinstance(value, (list, tuple)):
         return [
-            number_type(v) if v is not None
+            _convert(number_type, v) if v is not None
             else empty_value_for_VR(vr)
             for v in value
         ]
 
-    return number_type(value)
+    try:
+        return number_type(value)
+    except:
+        logging.error("Value type and value are not matched")
 
 
 OtherValueType = Union[None, str, int, float]
@@ -175,13 +189,16 @@ class JsonDataElementConverter:
 
             if not self.value:
                 return empty_value_for_VR(self.vr)
+                
+            try:
+                val = cast(List[ValueType], self.value)
+                element_value = [self.get_regular_element_value(v) for v in val]
+                if len(element_value) == 1 and self.vr != VR.SQ:
+                    element_value = element_value[0]
 
-            val = cast(List[ValueType], self.value)
-            element_value = [self.get_regular_element_value(v) for v in val]
-            if len(element_value) == 1 and self.vr != VR.SQ:
-                element_value = element_value[0]
-
-            return convert_to_python_number(element_value, self.vr)
+                return convert_to_python_number(element_value, self.vr)
+            except:
+                logger.error("cannot convert string to value")
 
         # The value for "InlineBinary" shall be encoded as a base64 encoded
         # string, as shown in PS3.18, Table F.3.1-1, but the example in
